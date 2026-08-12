@@ -88,7 +88,7 @@ print_stdout:
   CPX write_ptr
   BEQ exit
 
-  CPY #31
+  CPY #29
   BEQ exit
 
   LDX read_ptr

@@ -40,12 +40,13 @@
 .proc reset_handler
   SEI
   CLD
-  LDA #%10010000   ; включить NMI
+  LDA #%10010000  ; enable NMI
   STA PPUCTRL
 
   vblankwait:
     BIT PPUSTATUS
     BPL vblankwait
+
   ; filling paletts
   LDX PPUSTATUS
   LDX #$3f
@@ -53,24 +54,25 @@
   LDX #$00
   STX PPUADDR
 
-  LDA #$0f;#$0f
+  LDA #$0f
   STA PPUDATA
-  LDA #$10;#$26
+  LDA #$10
   STA PPUDATA
   LDA #$30
   STA PPUDATA
   LDA #$30
   STA PPUDATA
 
-  lda #$23          ; Старший байт адреса Attribute Table ($23C0)
+  ; filling attributes table
+  lda #$23
   sta $2006
-  lda #$C0          ; Младший байт адреса Attribute Table
+  lda #$C0
   sta $2006
 
-  ldx #64           ; Всего 64 байта атрибутов на одну nametable
-  lda #$00          ; Значение 0 назначает палитру 0 всем блокам
+  ldx #64
+  lda #$00
 clear_attributes:
-  sta $2007         ; Записываем нули в PPU
+  sta $2007
   dex
   bne clear_attributes
 
@@ -79,26 +81,18 @@ clear_attributes:
   STX write_ptr
   STX read_ptr
 
-  LDA #%00001110 ; фон + спрайты
+  ; enable render
+  LDA #%00001110
   STA PPUMASK
 
+  ; set cursor position
   LDA #$20
   STA cursor_raw_h
   LDA #$20
   STA cursor_raw_l
-  
-  LDX #00
-  put_string:
-    LDA hello_string,X
-    CMP #$00
-    BEQ after_string
-    STA stdout_buffer,X
-    INC write_ptr
-    INX
-    JMP put_string
 
-  after_string:
-    JSR $FF81
+  ; init kernel
+  JSR $FF81  
 
   loop:
   JMP loop
@@ -106,8 +100,6 @@ clear_attributes:
 
 .segment "RODATA"
 
-hello_string:
-  .byte "BIOS v. 0.1", $0a, $0
   ; .byte "  ", $b0, $b0, $b0, $b1, $b1, $b2, $b2, $db, " NesX v.0.1 ", $db, $b2, $b2, $b1, $b1, $b0, $b0, $b0, $0a, $0a
   ; .byte "  CPU: Ricoh RP2A03(07)", $0a
   ; .byte "  FRQ: 1.66-1.79 MHz", $0a
