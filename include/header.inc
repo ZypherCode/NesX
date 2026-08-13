@@ -1,5 +1,5 @@
 MAPPER          = 4    
-MIRRORING       = 0 
+MIRRORING       = 1
 HAS_SRAM        = 1 
 
 .segment "HEADER"

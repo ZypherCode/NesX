@@ -13,6 +13,9 @@
   cursor_raw_l: .res 1
   cursor_raw_h: .res 1
   nmi_counter: .res 1
+  scroll: .res 1
+  ppu_ctrl: .res 1  ; a copy of $2000
+  allow_scroll: .res 1
 
   key_state_current: .res 9
   key_state_prev: .res 9
@@ -24,6 +27,9 @@
   .export cursor_raw_l
   .export cursor_raw_h
   .export nmi_counter
+  .export scroll
+  .export ppu_ctrl
+  .export allow_scroll
   .export key_state_current
   .export key_state_prev
   .export key_state_changed
@@ -41,6 +47,7 @@
   SEI
   CLD
   LDA #%10010000  ; enable NMI
+  STA ppu_ctrl
   STA PPUCTRL
 
   vblankwait:
@@ -56,7 +63,7 @@
 
   LDA #$0f
   STA PPUDATA
-  LDA #$10
+  LDA #$2a
   STA PPUDATA
   LDA #$30
   STA PPUDATA
@@ -76,10 +83,25 @@ clear_attributes:
   dex
   bne clear_attributes
 
+  lda #$2b
+  sta $2006
+  lda #$C0
+  sta $2006
+
+  ldx #64
+  lda #$00
+clear_attributes2:
+  sta $2007
+  dex
+  bne clear_attributes2
+
   ; init variables
   LDX #$00
   STX write_ptr
   STX read_ptr
+  STX allow_scroll
+  LDX #0
+  STX scroll
 
   ; enable render
   LDA #%00001110
@@ -99,15 +121,6 @@ clear_attributes:
 .endproc
 
 .segment "RODATA"
-
-  ; .byte "  ", $b0, $b0, $b0, $b1, $b1, $b2, $b2, $db, " NesX v.0.1 ", $db, $b2, $b2, $b1, $b1, $b0, $b0, $b0, $0a, $0a
-  ; .byte "  CPU: Ricoh RP2A03(07)", $0a
-  ; .byte "  FRQ: 1.66-1.79 MHz", $0a
-  ; .byte "  RAM: 260/2048 bytes", $0a, $0a
-  ; .byte "  Kernel: NesX 0.0", $0a
-  ; .byte "  Shell: XSH 0.0", $0a
-  ; .byte "  FS: NRFS", $0a
-  ; .byte "~$ ", $00  
 
 .segment "VECTORS"
   .addr nmi_handler, reset_handler, irq_handler

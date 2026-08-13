@@ -1,17 +1,24 @@
 .include "jmptable.inc" 
 
 .segment "CODE"
+.import read_ptr
 .proc kernel_init
+
+  
   LDX #$00
   @print:
     LDA ready,X
     CMP #$00
-    BEQ mainloop
+    BEQ wait
     JSR CHROUT
     INX
     JMP @print
-
-  mainloop:
+    
+    wait:
+    LDA write_ptr
+    CMP read_ptr
+    BNE wait
+    mainloop:
     JSR CHRIN
     JSR CHROUT
     JMP mainloop
@@ -32,6 +39,7 @@
   INC write_ptr
   PLA
   TAX
+  TYA
   RTS
 .endproc
 
@@ -125,7 +133,14 @@ return:
 
 .segment "RODATA"
 ready:
-  .byte "NesX shell", $0a, "READY.", $0a, $0
+  .byte "  ", $b0, $b0, $b0, $b1, $b1, $b2, $b2, $db, " NesX v.0.1 ", $db, $b2, $b2, $b1, $b1, $b0, $b0, $b0, $0a, $0a
+  ; .byte "  CPU: Ricoh RP2A03(07)", $0a
+  ; .byte "  FRQ: 1.66-1.79 MHz", $0a
+  ; .byte "  RAM: 260/2048 bytes", $0a, $0a
+  ; .byte "  Kernel: NesX 0.0", $0a
+  ; .byte "  Shell: XSH 0.0", $0a
+  ; .byte "  FS: NRFS", $0a
+  .byte $0a, $0a, "READY.", $0a, $0
 
 key_layout:
   .byte $38, $0a, "[]\SY", $01
@@ -146,7 +161,7 @@ shifted_key_layout:
   .byte $34, "YGHBV&^"
   .byte $33, "TRDFC%$"
   .byte $32, "WSAXZE#"
-  .byte $31, "EqC G!@"
+  .byte $31, "~qC G!@"
   .byte $31, $1e, $10, $11, $1f, " DI"
 
 .segment "JMPTABLE"
